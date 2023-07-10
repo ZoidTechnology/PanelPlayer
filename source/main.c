@@ -30,7 +30,6 @@ long get_time()
 
 void await(long time)
 {
-
 	long delay = time - get_time();
 
 	if (delay > 0)
