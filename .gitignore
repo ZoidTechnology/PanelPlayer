@@ -1,0 +1,4 @@
+/.vscode
+/build
+/extensions/nanoled/build
+/extensions/grayscale/extension.so
