@@ -7,12 +7,16 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define SQUARE(a) ((a) * (a))
 
-#define PORT "/dev/ttyACM0"
-#define PIN 0
-#define RGBW 1
-#define DISTANCE 4
-#define BLEND 0.9
-#define TIMEOUT 4
+#define PORT "/dev/ttyACM0" // NanoLED serial port
+#define PIN 0 // NanoLED output pin
+#define LEDS 28 // Number of LEDs per side
+#define PITCH (1000.0 / 60.0 / 2.0) // LED pitch in display pixels
+#define EDGE ((256.0 - PITCH * LEDS) / 2.0) // Number of display pixels at either side of LED strip
+#define RGBW true // Whether LED strip includes white LEDs
+#define WHITE false // Use white LED instead of mixing red, green, and blue
+#define DISTANCE 3 // Distance from centre to sample pixels
+#define BLEND 0.75 // Amount of previous value to blend with current value
+#define TIMEOUT 4 // Number of frames to wait for a valid response before sending another frame
 
 nanoled *instance;
 uint8_t buffer[4096];
@@ -24,7 +28,7 @@ void mix(uint8_t *a, uint8_t b, float amount)
 	*a = *a * amount + b * (1 - amount);
 }
 
-int set(int index, int centreX, int centreY, int width, uint8_t *frame)
+void set(int *index, int centreX, int centreY, int width, uint8_t *frame)
 {
 	int r = 0;
 	int g = 0;
@@ -49,22 +53,23 @@ int set(int index, int centreX, int centreY, int width, uint8_t *frame)
 	b /= count * 255;
 
 #if RGBW
-	int w = MIN(MIN(r, g), b);
+	int w = 0;
 
+#if WHITE
+	w = MIN(MIN(r, g), b);
 	r -= w;
 	g -= w;
 	b -= w;
 #endif
-
-	mix(buffer + index++, g, BLEND);
-	mix(buffer + index++, r, BLEND);
-	mix(buffer + index++, b, BLEND);
-
-#if RGBW
-	mix(buffer + index++, w, BLEND);
 #endif
 
-	return index;
+	mix(buffer + (*index)++, g, BLEND);
+	mix(buffer + (*index)++, r, BLEND);
+	mix(buffer + (*index)++, b, BLEND);
+
+#if RGBW
+	mix(buffer + (*index)++, w, BLEND);
+#endif
 }
 
 bool init()
@@ -75,6 +80,28 @@ bool init()
 
 void update(int width, int height, uint8_t *frame)
 {
+	int index = 0;
+
+	for (int led = 0; led < LEDS; led++)
+	{
+		set(&index, width - EDGE - (led + 0.5) * PITCH, DISTANCE, width, frame);
+	}
+
+	for (int led = 0; led < LEDS; led++)
+	{
+		set(&index, DISTANCE, EDGE + (led + 0.5) * PITCH, width, frame);
+	}
+
+	for (int led = 0; led < LEDS; led++)
+	{
+		set(&index, EDGE + (led + 0.5) * PITCH, height - DISTANCE - 1, width, frame);
+	}
+
+	for (int led = 0; led < LEDS; led++)
+	{
+		set(&index, width - DISTANCE - 1, height - EDGE - (led + 0.5) * PITCH, width, frame);
+	}
+
 	if (nanoled_read(instance) != checksum)
 	{
 		if (++attempts < TIMEOUT)
@@ -82,17 +109,10 @@ void update(int width, int height, uint8_t *frame)
 			return;
 		}
 
-		puts("Failed to get response!");
+		puts("Failed to get response from NanoLED!");
 	}
 
 	attempts = 0;
-	int index = 0;
-
-	for (float x = DISTANCE; x < width - DISTANCE; x += (1000.0 / 60.0 / 2.0))
-	{
-		index = set(index, x, DISTANCE, width, frame);
-	}
-
 	checksum = nanoled_write(instance, PIN, buffer, index);
 }
 
