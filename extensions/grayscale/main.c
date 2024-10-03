@@ -2,7 +2,7 @@
 
 void update(int width, int height, uint8_t *frame)
 {
-	for (int index = 0; index < width * height; index += 3)
+	for (int index = 0; index < width * height * 3; index += 3)
 	{
 		float brightness = 0;
 
