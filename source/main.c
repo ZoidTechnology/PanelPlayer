@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 	}
 
 	void *extension = NULL;
-	void (*update)();
+	void (*update)() = NULL;
 
 	if (extensionFile != NULL)
 	{
@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			if (extension != NULL)
+			if (update != NULL)
 			{
 				update(width, height, buffer);
 			}
