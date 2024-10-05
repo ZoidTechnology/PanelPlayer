@@ -10,7 +10,8 @@
 #define PACKET_SIZE 4098
 #define BUFFER_SIZE (PACKET_SIZE + PACKET_SIZE / 254 + 2)
 
-struct nanoled {
+struct nanoled
+{
 	int device;
 	uint8_t *buffer;
 };
@@ -34,7 +35,7 @@ static uint8_t insert(uint8_t *buffer, int *block, int *index, uint8_t value)
 	{
 		insert(buffer, block, index, value);
 	}
-	
+
 	return value;
 }
 
@@ -97,7 +98,7 @@ int nanoled_write(nanoled *instance, int pin, uint8_t *data, int length)
 
 	checksum ^= insert(instance->buffer, &block, &bufferIndex, header >> 8);
 	checksum ^= insert(instance->buffer, &block, &bufferIndex, header);
-	
+
 	for (int dataIndex = 0; dataIndex < length; dataIndex++)
 	{
 		checksum ^= insert(instance->buffer, &block, &bufferIndex, data[dataIndex]);

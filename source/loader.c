@@ -4,13 +4,15 @@
 
 #include "loader.h"
 
-typedef struct loader_queue_item {
+typedef struct loader_queue_item
+{
 	char *path;
 	void *data;
 	int size;
 } loader_queue_item;
 
-struct loader {
+struct loader
+{
 	int length;
 	loader_queue_item *queue;
 	int head;
@@ -26,9 +28,9 @@ static void *loader_process(void *parameter)
 	loader *instance = parameter;
 	pthread_mutex_lock(&instance->lock);
 
-	for (int index = 0; ; index = (index + 1) % instance->length)
+	for (int index = 0;; index = (index + 1) % instance->length)
 	{
-		while(instance->destroyed || index == instance->head)
+		while (instance->destroyed || index == instance->head)
 		{
 			if (instance->destroyed)
 			{
@@ -71,10 +73,10 @@ static void *loader_process(void *parameter)
 			free(item.data);
 		}
 
-close_file:
+	close_file:
 		fclose(file);
 
-update_item:
+	update_item:
 		if (item.data == NULL || item.size < 0)
 		{
 			item.data = NULL;
@@ -201,7 +203,7 @@ void loader_destroy(loader *instance)
 	pthread_cond_destroy(&instance->condition);
 	pthread_mutex_destroy(&instance->lock);
 
-	while(instance->head != instance->tail)
+	while (instance->head != instance->tail)
 	{
 		loader_queue_item item = instance->queue[instance->tail];
 

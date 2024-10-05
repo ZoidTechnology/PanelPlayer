@@ -12,7 +12,8 @@
 
 #define MAX_PIXELS 497
 
-struct colorlight {
+struct colorlight
+{
 	int socket;
 	struct msghdr message;
 };

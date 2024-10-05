@@ -79,27 +79,27 @@ int main(int argc, char *argv[])
 				failed = ++index >= argc;
 				port = argv[index];
 				break;
-			
+
 			case 'w':
 				failed = ++index >= argc || parse(argv[index], &width);
 				break;
-			
+
 			case 'h':
 				failed = ++index >= argc || parse(argv[index], &height);
 				break;
-			
+
 			case 'b':
 				failed = ++index >= argc || parse(argv[index], &brightness);
 				break;
-			
+
 			case 'm':
 				failed = ++index >= argc || parse(argv[index], &mix);
 				break;
-			
+
 			case 'r':
 				failed = ++index >= argc || parse(argv[index], &rate);
 				break;
-			
+
 			case 'e':
 				failed = ++index >= argc;
 				extensionFile = argv[index];
@@ -108,11 +108,11 @@ int main(int argc, char *argv[])
 			case 's':
 				shuffle = true;
 				break;
-			
+
 			case 'v':
 				verbose = true;
 				break;
-			
+
 			default:
 				failed = true;
 		}
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 			puts("Image is smaller than display!");
 			goto delete_decoder;
 		}
-		
+
 		long start = 0;
 		long next = 0;
 
@@ -342,10 +342,10 @@ int main(int argc, char *argv[])
 			printf("Played %d frames in %.2f seconds at an average rate of %.2f frames per second.\n", info.frame_count, seconds, info.frame_count / seconds);
 		}
 
-delete_decoder:
+	delete_decoder:
 		WebPAnimDecoderDelete(decoder);
 
-free_file:
+	free_file:
 		free(file);
 	}
 
