@@ -13,6 +13,7 @@
 
 #define QUEUE_SIZE 4
 #define MIX_MAXIMUM 100
+#define UPDATE_DELAY 10
 
 bool parse(const char *source, int *destination)
 {
@@ -225,6 +226,7 @@ int main(int argc, char *argv[])
 	}
 
 	int queued = 0;
+	long next = get_time();
 	bool initial = true;
 
 	for (int source = 0; shuffle || source < sourcesLength; source++)
@@ -278,8 +280,8 @@ int main(int argc, char *argv[])
 			goto delete_decoder;
 		}
 
-		long start = 0;
-		long next = 0;
+		int previous = 0;
+		long start = next;
 
 		while (WebPAnimDecoderHasMoreFrames(decoder))
 		{
@@ -314,9 +316,9 @@ int main(int argc, char *argv[])
 				colorlight_send_row(colorlight, y, width, buffer + y * width * 3);
 			}
 
-			if (start == 0)
+			if (next - get_time() < UPDATE_DELAY)
 			{
-				start = next = get_time();
+				next = get_time() + UPDATE_DELAY;
 			}
 
 			await(next);
@@ -324,21 +326,20 @@ int main(int argc, char *argv[])
 
 			if (rate > 0)
 			{
-				next += 1000 / rate;
+				next = get_time() + 1000 / rate;
 			}
 			else
 			{
-				next = start + timestamp;
+				next = get_time() + timestamp - previous;
+				previous = timestamp;
 			}
 
 			initial = false;
 		}
 
-		await(next);
-
 		if (verbose)
 		{
-			float seconds = (get_time() - start) / 1000.0;
+			float seconds = (next - start) / 1000.0;
 			printf("Played %d frames in %.2f seconds at an average rate of %.2f frames per second.\n", info.frame_count, seconds, info.frame_count / seconds);
 		}
 
@@ -349,6 +350,7 @@ int main(int argc, char *argv[])
 		free(file);
 	}
 
+	await(next);
 	status = EXIT_SUCCESS;
 
 destroy_extension:
