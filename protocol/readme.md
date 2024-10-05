@@ -2,7 +2,7 @@
 The Colorlight protocol consists of layer-2 ethernet frames. The header doesn't include the EtherType field. In its place is a single byte indicating packet type. When this byte is less than 0x06 the frame will be invalid and may be dropped by some network controllers. The receiving card uses a MAC address of `11:22:33:44:55:66`. The sender uses a MAC address of `22:22:33:44:55:66`. The following packets have been identified:
 
 ## Display Frame (0x01)
-Display the stored image. Sending frames faster than around 50 Hz results in stuttering. The byte at offset 6 appears to be incremented by the receiving card.
+Display the stored image. Sending frames faster than around 50 Hz results in stuttering. This packet should be delayed at least 5 ms after sending the last row of image data. The byte at offset 6 appears to be incremented by the receiving card.
 
 | Offset | Length | Description      |
 |--------|--------|------------------|
