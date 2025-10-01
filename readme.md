@@ -1,8 +1,8 @@
 # PanelPlayer
-A [WebP](https://developers.google.com/speed/webp) player for Colorlight receiving cards. Tested with the Colorlight 5A-75B.
+A media player for Colorlight receiving cards supporting WebP, JPEG, PNG, GIF, and BMP formats. Tested with the Colorlight 5A-75B.
 
 ## Usage
-PanelPlayer can be launched with `panelplayer <options> <sources>` where `<sources>` is one or more WebP files. The available options are:
+PanelPlayer can be launched with `panelplayer <options> <sources>` where `<sources>` is one or more image/animation files (WebP, JPEG, PNG, GIF, or BMP). The available options are:
 
 ### `-p <ethernet port>`
 Sets which ethernet port to use for sending. This option is required.
@@ -32,7 +32,12 @@ Play sources randomly instead of in a fixed order. If used with a single source,
 Enable verbose output.
 
 ## Building
-Ensure `libwebp` is installed. PanelPlayer can be built by running `make` from within the root directory.
+Install the required development libraries:
+```bash
+sudo apt install libwebp-dev libjpeg-dev libpng-dev libgif-dev
+```
+
+PanelPlayer can be built by running `make` from within the root directory.
 
 ## Extensions
 Extensions are a way to read or alter frames without modifying PanelPlayer. A minimal extension consists of an `update` function which gets called before each frame is sent. An extension may also include `init` and `destroy` functions. The `destroy` function will always be called if present, even when the `init` function indicates an error has occurred. Example extensions are located in the `extensions` directory.
