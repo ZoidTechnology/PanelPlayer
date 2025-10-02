@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 	char *extensionFile = NULL;
 	bool shuffle = false;
 	bool verbose = false;
+	bool duplicate = false;
 	int sourcesLength = 0;
 	char **sources;
 
@@ -113,6 +114,10 @@ int main(int argc, char *argv[])
 				verbose = true;
 				break;
 
+			case 'd':
+				duplicate = true;
+				break;
+
 			default:
 				failed = true;
 		}
@@ -132,6 +137,7 @@ int main(int argc, char *argv[])
 			puts("  -e <extension>  Load extension from file");
 			puts("  -s              Shuffle sources");
 			puts("  -v              Enable verbose output");
+			puts("  -d              Duplicate each row vertically");
 
 			goto free_sources;
 		}
@@ -308,6 +314,11 @@ int main(int argc, char *argv[])
 			for (int y = 0; y < height; y++)
 			{
 				colorlight_send_row(colorlight, y, width, buffer + y * width * 3);
+
+				if (duplicate)
+				{
+					colorlight_send_row(colorlight, y + height, width, buffer + y * width * 3);
+				}
 			}
 
 			if (next - get_time() < UPDATE_DELAY)
