@@ -29,6 +29,11 @@ namespace PanelPlayerExample
         public static extern int panelplayer_set_rate(int frame_rate);
 
         [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int panelplayer_set_duplicate(
+            [MarshalAs(UnmanagedType.I1)] bool enable
+        );
+
+        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int panelplayer_load_extension(
             [MarshalAs(UnmanagedType.LPStr)] string extension_path
         );
@@ -88,6 +93,15 @@ namespace PanelPlayerExample
             if (result != PanelPlayerNative.PANELPLAYER_SUCCESS)
             {
                 throw new Exception($"Failed to set frame rate: {result}");
+            }
+        }
+
+        public void SetDuplicate(bool enable)
+        {
+            int result = PanelPlayerNative.panelplayer_set_duplicate(enable);
+            if (result != PanelPlayerNative.PANELPLAYER_SUCCESS)
+            {
+                throw new Exception($"Failed to set duplicate mode: {result}");
             }
         }
 

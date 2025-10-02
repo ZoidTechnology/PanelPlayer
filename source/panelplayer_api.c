@@ -23,6 +23,7 @@ typedef struct {
     int brightness;
     int mix;
     int rate;
+    bool duplicate;
     void *extension;
     void (*update_func)(int width, int height, uint8_t *frame);
     bool initialized;
@@ -68,6 +69,7 @@ int panelplayer_init(const char* interface_name, int width, int height, int brig
     g_state.brightness = brightness;
     g_state.mix = 0;
     g_state.rate = 0;
+    g_state.duplicate = false;
     g_state.extension = NULL;
     g_state.update_func = NULL;
     g_state.initialized = true;
@@ -92,12 +94,21 @@ int panelplayer_set_rate(int frame_rate) {
     if (!g_state.initialized) {
         return PANELPLAYER_NOT_INITIALIZED;
     }
-    
+
     if (frame_rate < 0) {
         return PANELPLAYER_INVALID_PARAM;
     }
-    
+
     g_state.rate = frame_rate;
+    return PANELPLAYER_SUCCESS;
+}
+
+int panelplayer_set_duplicate(bool enable) {
+    if (!g_state.initialized) {
+        return PANELPLAYER_NOT_INITIALIZED;
+    }
+
+    g_state.duplicate = enable;
     return PANELPLAYER_SUCCESS;
 }
 
@@ -218,6 +229,10 @@ int panelplayer_play_file(const char* file_path) {
 
         for (int y = 0; y < g_state.height; y++) {
             colorlight_send_row(g_state.colorlight, y, g_state.width, g_state.buffer + y * g_state.width * 3);
+
+            if (g_state.duplicate) {
+                colorlight_send_row(g_state.colorlight, y + g_state.height, g_state.width, g_state.buffer + y * g_state.width * 3);
+            }
         }
 
         if (next - get_time() < UPDATE_DELAY) {
@@ -260,8 +275,12 @@ int panelplayer_play_frame_bgr(const uint8_t* bgr_data, int width, int height) {
     
     for (int y = 0; y < g_state.height; y++) {
         colorlight_send_row(g_state.colorlight, y, g_state.width, g_state.buffer + y * g_state.width * 3);
+
+        if (g_state.duplicate) {
+            colorlight_send_row(g_state.colorlight, y + g_state.height, g_state.width, g_state.buffer + y * g_state.width * 3);
+        }
     }
-    
+
     long next = get_time() + UPDATE_DELAY;
     await(next);
     colorlight_send_update(g_state.colorlight, g_state.brightness, g_state.brightness, g_state.brightness);

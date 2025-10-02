@@ -110,5 +110,6 @@ The C# wrapper provides these main methods:
 - `LoadExtension(path)` - Load processing extensions
 - `SetMix(percentage)` - Control frame blending
 - `SetFrameRate(fps)` - Override animation timing
+- `SetDuplicate(enable)` - Enable vertical duplication for stacked displays
 
 For detailed API documentation, see the native library header file `source/panelplayer_api.h`.

@@ -65,18 +65,36 @@ int panelplayer_set_mix(int mix_percentage);
 
 /**
  * @brief Set playback frame rate
- * 
+ *
  * Sets the frame rate for WebP animation playback. When set to 0,
  * uses the timing information embedded in the WebP file.
- * 
+ *
  * @param frame_rate Target frame rate in frames per second (0 for auto)
- * 
+ *
  * @return PANELPLAYER_SUCCESS on success, error code otherwise
  * @retval PANELPLAYER_SUCCESS Frame rate set successfully
  * @retval PANELPLAYER_NOT_INITIALIZED Library not initialized
  * @retval PANELPLAYER_INVALID_PARAM Negative frame rate provided
  */
 int panelplayer_set_rate(int frame_rate);
+
+/**
+ * @brief Enable or disable vertical duplication mode
+ *
+ * When enabled, each row of the image is sent twice - once at its original
+ * position (y) and once at y+height. This is useful for driving two identical
+ * displays stacked vertically where the image height is half the total display height.
+ *
+ * Example: With a 240x80 image and duplicate enabled, each row is sent to both
+ * y and y+80, effectively filling a 240x160 display.
+ *
+ * @param enable true to enable duplication, false to disable
+ *
+ * @return PANELPLAYER_SUCCESS on success, error code otherwise
+ * @retval PANELPLAYER_SUCCESS Duplicate mode set successfully
+ * @retval PANELPLAYER_NOT_INITIALIZED Library not initialized
+ */
+int panelplayer_set_duplicate(bool enable);
 
 /**
  * @brief Load a frame processing extension
