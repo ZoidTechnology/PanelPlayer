@@ -6,9 +6,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <webp/demux.h>
-
 #include "colorlight.h"
+#include "decoder.h"
 #include "loader.h"
 
 #define QUEUE_SIZE 4
@@ -253,21 +252,16 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		WebPData data = {
-			.bytes = file,
-			.size = size
-		};
+		decoder *decoder;
 
-		WebPAnimDecoder *decoder;
-
-		if ((decoder = WebPAnimDecoderNew(&data, NULL)) == NULL)
+		if ((decoder = decoder_init(file, size)) == NULL)
 		{
 			puts("Failed to decode file!");
 			goto free_file;
 		}
 
-		WebPAnimInfo info;
-		WebPAnimDecoderGetInfo(decoder, &info);
+		decoder_info info;
+		decoder_get_info(decoder, &info);
 
 		if (verbose)
 		{
@@ -283,12 +277,12 @@ int main(int argc, char *argv[])
 		int previous = 0;
 		long start = next;
 
-		while (WebPAnimDecoderHasMoreFrames(decoder))
+		while (decoder_has_more_frames(decoder))
 		{
 			uint8_t *decoded;
 			int timestamp;
 
-			WebPAnimDecoderGetNext(decoder, &decoded, &timestamp);
+			decoder_get_next(decoder, &decoded, &timestamp);
 
 			for (int y = 0; y < height; y++)
 			{
@@ -344,7 +338,7 @@ int main(int argc, char *argv[])
 		}
 
 	delete_decoder:
-		WebPAnimDecoderDelete(decoder);
+		decoder_destroy(decoder);
 
 	free_file:
 		free(file);

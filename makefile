@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -pthread -O3
 LDFLAGS = -pthread
-LDLIBS = -ldl -lwebpdemux
+LDLIBS = -ldl -lwebpdemux -ljpeg -lpng -lgif
 
 SOURCE = ./source
 BUILD = ./build
