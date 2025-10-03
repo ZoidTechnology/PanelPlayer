@@ -37,7 +37,54 @@ Install the required development libraries:
 sudo apt install libwebp-dev libjpeg-dev libpng-dev libgif-dev
 ```
 
-PanelPlayer can be built by running `make` from within the root directory.
+Build PanelPlayer by running `make` from the root directory:
+```bash
+make              # Build both executable and library
+make library      # Build only the shared library
+```
+
+### Installation
+To install PanelPlayer system-wide (requires root privileges):
+```bash
+sudo make install
+```
+
+This will install:
+- Executable: `/usr/local/bin/panelplayer`
+- Library: `/usr/local/lib/libpanelplayer.so`
+- Header: `/usr/local/include/panelplayer/panelplayer_api.h`
+
+After installation, you may need to update the library cache:
+```bash
+sudo ldconfig
+```
+
+To uninstall:
+```bash
+sudo make uninstall
+```
+
+### Custom Installation Prefix
+You can install to a different location using the `PREFIX` variable:
+```bash
+make install PREFIX=/opt/panelplayer
+```
+
+## Usage After Installation
+Once installed, the `panelplayer` command is available system-wide:
+```bash
+panelplayer -p eth0 -w 128 -h 64 animation.webp
+```
+
+For library usage in your C projects:
+```c
+#include <panelplayer/panelplayer_api.h>
+```
+
+Compile with:
+```bash
+gcc -lpanelplayer myapp.c -o myapp
+```
 
 ## Extensions
 Extensions are a way to read or alter frames without modifying PanelPlayer. A minimal extension consists of an `update` function which gets called before each frame is sent. An extension may also include `init` and `destroy` functions. The `destroy` function will always be called if present, even when the `init` function indicates an error has occurred. Example extensions are located in the `extensions` directory.
