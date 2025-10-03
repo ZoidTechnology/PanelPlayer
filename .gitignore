@@ -2,3 +2,5 @@
 /build
 /extensions/nanoled/build
 /extensions/grayscale/extension.so
+.claude/
+CLAUDE.md
