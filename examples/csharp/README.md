@@ -4,7 +4,7 @@ This directory contains a C# example application that demonstrates how to use th
 
 ## Prerequisites
 
-- .NET 9.0 or later
+- .NET 8.0 or later (supports both .NET 8.0 and 9.0)
 - libpanelplayer.so compiled and available
 - Root privileges (required for raw ethernet access)
 
@@ -37,56 +37,77 @@ dotnet build
 
 ## Running
 
-The application must be run as root due to raw ethernet socket requirements:
+The application must be run as root due to raw ethernet socket requirements. It uses command-line arguments similar to the native PanelPlayer:
 
 ```bash
-sudo dotnet run [image-file]
+sudo dotnet run -- -p <port> -w <width> -h <height> [options] <sources>
 ```
+
+### Options
+
+- `-p <port>` - Set ethernet port (required, e.g., eth0, end0)
+- `-w <width>` - Set display width in pixels (required)
+- `-h <height>` - Set display height in pixels (required)
+- `-b <brightness>` - Set display brightness (0-255, default: 255)
+- `-m <mix>` - Set frame mixing percentage (0-99, default: 0)
+- `-r <rate>` - Override source frame rate
+- `-e <extension>` - Load extension from file
+- `-d` - Duplicate each row vertically
+- `-v` - Enable verbose output
 
 ### Examples
 
-Play an image or animation file (supports WebP, JPEG, PNG, GIF, BMP):
+Play a single image file:
 ```bash
-sudo dotnet run animation.webp
-sudo dotnet run image.jpg
-sudo dotnet run animation.gif
+sudo dotnet run -- -p eth0 -w 192 -h 64 image.jpg
 ```
 
-Run without arguments to see the blue frame demonstration:
+Play multiple animation files with verbose output:
 ```bash
-sudo dotnet run
+sudo dotnet run -- -p eth0 -w 192 -h 64 -v animation1.webp animation2.gif
+```
+
+Play with frame mixing and custom brightness:
+```bash
+sudo dotnet run -- -p eth0 -w 192 -h 64 -b 200 -m 50 video.webp
+```
+
+Play with duplicate mode (for stacked displays):
+```bash
+sudo dotnet run -- -p eth0 -w 192 -h 64 -d content.png
+```
+
+Load an extension:
+```bash
+sudo dotnet run -- -p eth0 -w 192 -h 64 -e ../../extensions/grayscale/extension.so image.jpg
 ```
 
 ## Publish
 
-Make a self contained app
+Create a self-contained application:
 ```bash
 dotnet publish -r linux-arm64 --self-contained true -c Release
 ```
-## Usage
 
-The example demonstrates:
+After publishing, the executable will be in `bin/Release/net8.0/linux-arm64/publish/`:
+```bash
+sudo ./bin/Release/net8.0/linux-arm64/publish/PanelPlayerExample -p eth0 -w 192 -h 64 image.jpg
+```
 
-1. **Basic initialization** - Setting up the panel with network interface and dimensions
-2. **Multi-format image playback** - Playing WebP, JPEG, PNG, GIF, or BMP files (if provided as argument)
-3. **Manual frame display** - Sending raw BGR pixel data to create a blue frame
-4. **Proper cleanup** - Using `using` statement for automatic resource disposal
+Note: The build creates binaries for both .NET 8.0 and 9.0. Use the appropriate version based on your runtime.
 
-## Configuration
+## Project Structure
 
-The example is configured for:
-- Network interface: `end0` (eth0 is more common)
-- Panel dimensions: 192x64 pixels
-- Brightness: 255 (maximum)
-
-Modify these values in `PanelPlayerExample.cs` to match your setup.
+- `Program.cs` - Main entry point with command-line argument parsing
+- `PanelPlayer.cs` - Managed wrapper class for the native library
+- `PanelPlayerNative.cs` - P/Invoke declarations for libpanelplayer.so
 
 ## Tested Environment
 
 This example has been tested on:
 - **Hardware**: Orange Pi Zero 3
 - **OS**: Debian Bookworm
-- **Runtime**: .NET 9.0.302
+- **Runtime**: .NET 8.0 and .NET 9.0
 
 ## Troubleshooting
 
