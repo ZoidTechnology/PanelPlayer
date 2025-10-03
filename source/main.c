@@ -7,35 +7,17 @@
 #include <unistd.h>
 
 #include "colorlight.h"
+#include "core.h"
 #include "decoder.h"
 #include "loader.h"
 
 #define QUEUE_SIZE 4
-#define MIX_MAXIMUM 100
-#define UPDATE_DELAY 10
 
 bool parse(const char *source, int *destination)
 {
 	char *end;
 	*destination = strtol(source, &end, 10);
 	return end[0] != 0;
-}
-
-long get_time()
-{
-	struct timespec time;
-	clock_gettime(CLOCK_MONOTONIC, &time);
-	return time.tv_sec * 1000 + time.tv_nsec / 1000000;
-}
-
-void await(long time)
-{
-	long delay = time - get_time();
-
-	if (delay > 0)
-	{
-		usleep(delay * 1000);
-	}
 }
 
 int main(int argc, char *argv[])
@@ -161,9 +143,9 @@ int main(int argc, char *argv[])
 		goto free_sources;
 	}
 
-	if (mix < 0 || mix >= MIX_MAXIMUM)
+	if (mix < 0 || mix >= CORE_MIX_MAXIMUM)
 	{
-		printf("Mix must be an integer between 0 and %d!\n", MIX_MAXIMUM - 1);
+		printf("Mix must be an integer between 0 and %d!\n", CORE_MIX_MAXIMUM - 1);
 		goto free_sources;
 	}
 
@@ -198,40 +180,19 @@ int main(int argc, char *argv[])
 	}
 
 	void *extension = NULL;
-	void (*update)() = NULL;
+	void (*update)(int, int, uint8_t*) = NULL;
 
 	if (extensionFile != NULL)
 	{
-		extension = dlopen(extensionFile, RTLD_NOW);
-
-		if (extension == NULL)
+		if (core_load_extension(extensionFile, &extension, &update) != 0)
 		{
 			puts("Failed to load extension!");
 			goto destroy_colorlight;
 		}
-
-		bool (*init)() = dlsym(extension, "init");
-
-		if (init != NULL)
-		{
-			if (init())
-			{
-				puts("Failed to initialise extension!");
-				goto destroy_extension;
-			}
-		}
-
-		update = dlsym(extension, "update");
-
-		if (update == NULL)
-		{
-			puts("Extension does not provide update function!");
-			goto destroy_extension;
-		}
 	}
 
 	int queued = 0;
-	long next = get_time();
+	long next = core_get_time();
 	bool initial = true;
 
 	for (int source = 0; shuffle || source < sourcesLength; source++)
@@ -290,52 +251,24 @@ int main(int argc, char *argv[])
 
 			decoder_get_next(decoder, &decoded, &timestamp);
 
-			for (int y = 0; y < height; y++)
+			core_process_frame(buffer, decoded, &info, width, height, mix, initial);
+			core_send_frame(colorlight, buffer, width, height, duplicate, update);
+
+			if (next - core_get_time() < CORE_UPDATE_DELAY)
 			{
-				for (int x = 0; x < width; x++)
-				{
-					int source = (y * info.canvas_width + x) * 4;
-					int destination = (y * width + x) * 3;
-
-					int oldFactor = initial ? 0 : mix;
-					int newFactor = MIX_MAXIMUM - oldFactor;
-
-					buffer[destination] = (buffer[destination] * oldFactor + decoded[source + 2] * newFactor) / MIX_MAXIMUM;
-					buffer[destination + 1] = (buffer[destination + 1] * oldFactor + decoded[source + 1] * newFactor) / MIX_MAXIMUM;
-					buffer[destination + 2] = (buffer[destination + 2] * oldFactor + decoded[source] * newFactor) / MIX_MAXIMUM;
-				}
+				next = core_get_time() + CORE_UPDATE_DELAY;
 			}
 
-			if (update != NULL)
-			{
-				update(width, height, buffer);
-			}
-
-			for (int y = 0; y < height; y++)
-			{
-				colorlight_send_row(colorlight, y, width, buffer + y * width * 3);
-
-				if (duplicate)
-				{
-					colorlight_send_row(colorlight, y + height, width, buffer + y * width * 3);
-				}
-			}
-
-			if (next - get_time() < UPDATE_DELAY)
-			{
-				next = get_time() + UPDATE_DELAY;
-			}
-
-			await(next);
+			core_await(next);
 			colorlight_send_update(colorlight, brightness, brightness, brightness);
 
 			if (rate > 0)
 			{
-				next = get_time() + 1000 / rate;
+				next = core_get_time() + 1000 / rate;
 			}
 			else
 			{
-				next = get_time() + timestamp - previous;
+				next = core_get_time() + timestamp - previous;
 				previous = timestamp;
 			}
 
@@ -355,21 +288,10 @@ int main(int argc, char *argv[])
 		free(file);
 	}
 
-	await(next);
+	core_await(next);
 	status = EXIT_SUCCESS;
 
-destroy_extension:
-	if (extension != NULL)
-	{
-		void (*destroy)() = dlsym(extension, "destroy");
-
-		if (destroy != NULL)
-		{
-			destroy();
-		}
-
-		dlclose(extension);
-	}
+	core_unload_extension(extension);
 
 destroy_colorlight:
 	colorlight_destroy(colorlight);
