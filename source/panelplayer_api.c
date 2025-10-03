@@ -156,49 +156,15 @@ int panelplayer_play_file(const char* file_path) {
         return PANELPLAYER_ERROR;
     }
 
-    decoder_info info;
-    decoder_get_info(dec, &info);
-
-    if (info.canvas_width < g_state.width || info.canvas_height < g_state.height) {
-        decoder_destroy(dec);
-        free(file_data);
-        return PANELPLAYER_ERROR;
-    }
-
-    long next = core_get_time();
-    int previous = 0;
-    bool initial = true;
-
-    while (decoder_has_more_frames(dec)) {
-        uint8_t *decoded;
-        int timestamp;
-
-        decoder_get_next(dec, &decoded, &timestamp);
-
-        core_process_frame(g_state.buffer, decoded, &info, g_state.width, g_state.height, g_state.mix, initial);
-        core_send_frame(g_state.colorlight, g_state.buffer, g_state.width, g_state.height, g_state.duplicate, g_state.update_func);
-
-        if (next - core_get_time() < CORE_UPDATE_DELAY) {
-            next = core_get_time() + CORE_UPDATE_DELAY;
-        }
-
-        core_await(next);
-        colorlight_send_update(g_state.colorlight, g_state.brightness, g_state.brightness, g_state.brightness);
-
-        if (g_state.rate > 0) {
-            next = core_get_time() + 1000 / g_state.rate;
-        } else {
-            next = core_get_time() + timestamp - previous;
-            previous = timestamp;
-        }
-
-        initial = false;
-    }
+    int result = core_play_decoded_file(dec, g_state.colorlight, g_state.buffer,
+                                        g_state.width, g_state.height, g_state.brightness,
+                                        g_state.mix, g_state.rate, g_state.duplicate,
+                                        g_state.update_func);
 
     decoder_destroy(dec);
     free(file_data);
 
-    return PANELPLAYER_SUCCESS;
+    return (result == 0) ? PANELPLAYER_SUCCESS : PANELPLAYER_ERROR;
 }
 
 int panelplayer_play_frame_bgr(const uint8_t* bgr_data, int width, int height) {

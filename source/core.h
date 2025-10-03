@@ -64,4 +64,23 @@ int core_load_extension(const char *path, void **extension, void (**update_func)
  */
 void core_unload_extension(void *extension);
 
+/**
+ * Play a decoded file through the complete playback loop
+ *
+ * @param dec Decoder instance with the loaded file
+ * @param cl Colorlight instance for hardware output
+ * @param buffer Frame buffer (width * height * 3 bytes)
+ * @param width Display width
+ * @param height Display height
+ * @param brightness Brightness level (0-255)
+ * @param mix Frame mixing percentage (0-99)
+ * @param rate Frame rate override (0 = use source timing)
+ * @param duplicate Enable vertical duplication mode
+ * @param update_func Optional extension update function (can be NULL)
+ * @return 0 on success, -1 on error
+ */
+int core_play_decoded_file(decoder *dec, colorlight *cl, uint8_t *buffer,
+                           int width, int height, int brightness, int mix,
+                           int rate, bool duplicate, void (*update_func)(int, int, uint8_t*));
+
 #endif

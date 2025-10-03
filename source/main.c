@@ -192,8 +192,6 @@ int main(int argc, char *argv[])
 	}
 
 	int queued = 0;
-	long next = core_get_time();
-	bool initial = true;
 
 	for (int source = 0; shuffle || source < sourcesLength; source++)
 	{
@@ -235,49 +233,18 @@ int main(int argc, char *argv[])
 			printf("Decoding %d frames at a resolution of %dx%d.\n", info.frame_count, info.canvas_width, info.canvas_height);
 		}
 
-		if (info.canvas_width < width || info.canvas_height < height)
+		long start = core_get_time();
+
+		if (core_play_decoded_file(decoder, colorlight, buffer, width, height, brightness, mix, rate, duplicate, update) != 0)
 		{
 			puts("Image is smaller than display!");
 			goto delete_decoder;
 		}
 
-		int previous = 0;
-		long start = next;
-
-		while (decoder_has_more_frames(decoder))
-		{
-			uint8_t *decoded;
-			int timestamp;
-
-			decoder_get_next(decoder, &decoded, &timestamp);
-
-			core_process_frame(buffer, decoded, &info, width, height, mix, initial);
-			core_send_frame(colorlight, buffer, width, height, duplicate, update);
-
-			if (next - core_get_time() < CORE_UPDATE_DELAY)
-			{
-				next = core_get_time() + CORE_UPDATE_DELAY;
-			}
-
-			core_await(next);
-			colorlight_send_update(colorlight, brightness, brightness, brightness);
-
-			if (rate > 0)
-			{
-				next = core_get_time() + 1000 / rate;
-			}
-			else
-			{
-				next = core_get_time() + timestamp - previous;
-				previous = timestamp;
-			}
-
-			initial = false;
-		}
-
 		if (verbose)
 		{
-			float seconds = (next - start) / 1000.0;
+			long end = core_get_time();
+			float seconds = (end - start) / 1000.0;
 			printf("Played %d frames in %.2f seconds at an average rate of %.2f frames per second.\n", info.frame_count, seconds, info.frame_count / seconds);
 		}
 
@@ -288,7 +255,6 @@ int main(int argc, char *argv[])
 		free(file);
 	}
 
-	core_await(next);
 	status = EXIT_SUCCESS;
 
 	core_unload_extension(extension);

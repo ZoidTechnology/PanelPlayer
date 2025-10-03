@@ -120,3 +120,58 @@ void core_unload_extension(void *extension)
 		dlclose(extension);
 	}
 }
+
+int core_play_decoded_file(decoder *dec, colorlight *cl, uint8_t *buffer,
+                           int width, int height, int brightness, int mix,
+                           int rate, bool duplicate, void (*update_func)(int, int, uint8_t*))
+{
+	if (dec == NULL || cl == NULL || buffer == NULL)
+	{
+		return -1;
+	}
+
+	decoder_info info;
+	decoder_get_info(dec, &info);
+
+	if (info.canvas_width < width || info.canvas_height < height)
+	{
+		return -1;
+	}
+
+	long next = core_get_time();
+	int previous = 0;
+	bool initial = true;
+
+	while (decoder_has_more_frames(dec))
+	{
+		uint8_t *decoded;
+		int timestamp;
+
+		decoder_get_next(dec, &decoded, &timestamp);
+
+		core_process_frame(buffer, decoded, &info, width, height, mix, initial);
+		core_send_frame(cl, buffer, width, height, duplicate, update_func);
+
+		if (next - core_get_time() < CORE_UPDATE_DELAY)
+		{
+			next = core_get_time() + CORE_UPDATE_DELAY;
+		}
+
+		core_await(next);
+		colorlight_send_update(cl, brightness, brightness, brightness);
+
+		if (rate > 0)
+		{
+			next = core_get_time() + 1000 / rate;
+		}
+		else
+		{
+			next = core_get_time() + timestamp - previous;
+			previous = timestamp;
+		}
+
+		initial = false;
+	}
+
+	return 0;
+}
