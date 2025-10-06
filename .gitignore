@@ -2,3 +2,7 @@
 /build
 /extensions/nanoled/build
 /extensions/grayscale/extension.so
+/examples/csharp/obj
+/examples/csharp/bin
+.claude/
+CLAUDE.md
